@@ -23,6 +23,7 @@
     --right: #5f9fa1;
     --right-soft: #dcecec;
     --danger: #b4483b;
+    --shade: rgba(40, 25, 20, .35);
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -36,6 +37,7 @@
       --right: #74b4b5;
       --right-soft: #283b3b;
       --danger: #e27a6c;
+      --shade: rgba(0, 0, 0, .55);
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -45,16 +47,18 @@
     padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px);
     max-width: 520px; margin: 0 auto;
   }
-  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+  button, input { font: inherit; color: inherit; }
+  button { border: 0; cursor: pointer; }
+  .L-text { color: var(--left); }
+  .R-text { color: var(--right); }
 
   .card { background: var(--card); border-radius: 22px; padding: 22px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
   .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
 
   /* idle */
   .last-side { font-size: 34px; font-weight: 700; margin: 0; }
-  .last-side.L { color: var(--left); }
-  .last-side.R { color: var(--right); }
   .last-meta { color: var(--muted); margin: 2px 0 0; }
+  .split { margin: 6px 0 0; font-weight: 600; }
   .start-label { margin: 26px 0 10px; font-weight: 600; }
   .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .side-btn {
@@ -72,10 +76,14 @@
   /* active */
   .active { text-align: center; }
   .active .side { font-size: 22px; font-weight: 700; margin: 0; }
-  .active .side.L { color: var(--left); }
-  .active .side.R { color: var(--right); }
   .timer { font-size: 64px; font-weight: 300; font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+  .chips { display: flex; justify-content: center; gap: 8px; margin: 4px 0 6px; flex-wrap: wrap; }
+  .chip { padding: 5px 12px; border-radius: 99px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chip.L { background: var(--left-soft); color: var(--left); }
+  .chip.R { background: var(--right-soft); color: var(--right); }
+  .chip.now { outline: 2px solid currentColor; }
   .since { color: var(--muted); margin: 0 0 22px; }
+  .linkish { background: none; padding: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
   .stop { width: 100%; padding: 22px 0; border-radius: 18px; font-size: 22px; font-weight: 700; color: #fff; }
   .stop.L { background: var(--left); }
   .stop.R { background: var(--right); }
@@ -88,39 +96,85 @@
   .summary div { flex: 1; background: var(--card); border-radius: 16px; padding: 12px 14px; }
   .summary b { display: block; font-size: 22px; }
   .summary span { font-size: 13px; color: var(--muted); }
+  .log-head { display: flex; align-items: baseline; justify-content: space-between; }
+  .add { background: none; color: var(--muted); font-weight: 600; font-size: 15px; padding: 22px 4px 8px; }
   h2 { font-size: 15px; color: var(--muted); font-weight: 600; margin: 22px 4px 8px; }
   .log { background: var(--card); border-radius: 18px; overflow: hidden; }
-  .entry { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-top: 1px solid var(--line); }
+  .entry { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-top: 1px solid var(--line); width: 100%; background: none; text-align: left; }
   .entry:first-child { border-top: 0; }
-  .pill { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; flex: none; }
+  .pills { display: flex; flex: none; }
+  .pill { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; border: 2px solid var(--card); }
+  .pill + .pill { margin-left: -10px; }
   .pill.L { background: var(--left); }
   .pill.R { background: var(--right); }
-  .entry .when { flex: 1; }
+  .entry .when { flex: 1; min-width: 0; }
   .entry .when small { display: block; color: var(--muted); font-size: 13px; }
   .entry .dur { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .entry .del { background: none; color: var(--muted); font-size: 22px; padding: 0 4px 0 8px; line-height: 1; }
+  .entry .chev { color: var(--muted); font-size: 20px; line-height: 1; }
   .empty { color: var(--muted); text-align: center; padding: 26px 0; }
 
   .export { display: block; width: 100%; margin-top: 26px; padding: 16px 0; border-radius: 16px; background: var(--card); font-weight: 600; }
   .note { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
   .more { display: block; margin: 10px auto 0; background: none; color: var(--muted); font-size: 15px; }
+
+  /* add / edit sheet */
+  .shade { position: fixed; inset: 0; background: var(--shade); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+  .sheet {
+    background: var(--card); width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+    border-radius: 22px 22px 0 0; padding: 20px 18px calc(env(safe-area-inset-bottom) + 18px);
+  }
+  .sheet h3 { margin: 0 0 16px; font-size: 20px; }
+  .field-label { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  .sheet input[type=datetime-local] {
+    width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 17px; -webkit-appearance: none; appearance: none; min-height: 48px;
+  }
+  .segs { margin: 18px 0 4px; }
+  .seg { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .seg .which { width: 92px; padding: 12px 0; border-radius: 12px; font-weight: 700; color: #fff; flex: none; }
+  .seg .which.L { background: var(--left); }
+  .seg .which.R { background: var(--right); }
+  .seg input {
+    width: 76px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 17px; text-align: center;
+  }
+  .seg .unit { color: var(--muted); flex: 1; }
+  .seg .x { background: none; color: var(--muted); font-size: 24px; padding: 0 6px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+  .add-side { background: var(--bg); padding: 10px 14px; border-radius: 12px; font-weight: 600; }
+  .total { margin: 16px 0 0; font-weight: 600; }
+  .sheet-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .sheet-actions button { flex: 1; padding: 16px 0; border-radius: 14px; font-weight: 700; }
+  .sheet-actions .save { background: var(--text); color: var(--card); }
+  .sheet-actions .back { background: var(--bg); }
+  .delete { display: block; margin: 16px auto 0; background: none; color: var(--danger); font-weight: 600; }
 </style>
 </head>
 <body>
 <main id="app"></main>
+<div id="sheet"></div>
 
 <script>
 const KEY = 'feeds.v1';
 const SIDE = { L: 'Left', R: 'Right' };
+const MIN = 60000;
 let state = load();
 let showDays = 7;
+let draft = null; // the feed being added or edited in the sheet
 
+/*
+ * A feed is { id, start, end, segments: [{ side, start, end }] }.
+ * Switching sides mid-feed adds a segment to the same feed.
+ * The active feed is { start, segments } where the last segment has no end yet.
+ */
 function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && Array.isArray(s.feeds)) return s;
-  } catch (e) {}
-  return { active: null, feeds: [] };
+  let s;
+  try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (!s || !Array.isArray(s.feeds)) return { active: null, feeds: [] };
+  // Feeds saved by the first version had a single side and no segments.
+  s.feeds = s.feeds.map(f => f.segments ? f : { id: f.id, start: f.start, end: f.end, segments: [{ side: f.side, start: f.start, end: f.end }] });
+  if (s.active && !s.active.segments) s.active = { start: s.active.start, segments: [{ side: s.active.side, start: s.active.start }] };
+  return s;
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { alert('Could not save: ' + e.message); }
@@ -128,49 +182,96 @@ function save() {
 // Ask the browser not to clear this data when space is low.
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
+/* ---------- helpers ---------- */
+const other = s => s === 'L' ? 'R' : 'L';
+const segDur = s => (s.end ?? Date.now()) - s.start;
+const feedDur = f => f.segments.reduce((t, s) => t + segDur(s), 0);
+const lastSide = f => f.segments[f.segments.length - 1].side;
+function sideTotals(f) {
+  const t = { L: 0, R: 0 };
+  for (const s of f.segments) t[s.side] += segDur(s);
+  return t;
+}
+// Order the sides were used in, e.g. ['L','R'] for left then right.
+function sideOrder(f) {
+  const out = [];
+  for (const s of f.segments) if (out[out.length - 1] !== s.side) out.push(s.side);
+  return out;
+}
+function sortFeeds() { state.feeds.sort((a, b) => b.start - a.start); }
+
 /* ---------- actions ---------- */
 function start(side) {
-  state.active = { side, start: Date.now() };
+  const now = Date.now();
+  state.active = { start: now, segments: [{ side, start: now }] };
   save(); render();
 }
 function stop() {
   const a = state.active;
   if (!a) return;
-  state.feeds.unshift({ id: a.start, side: a.side, start: a.start, end: Date.now() });
+  const now = Date.now();
+  a.segments[a.segments.length - 1].end = now;
+  state.feeds.push({ id: a.start, start: a.start, end: now, segments: a.segments });
+  sortFeeds();
   state.active = null;
   save(); render();
 }
 function switchSide() {
-  const next = state.active.side === 'L' ? 'R' : 'L';
-  stop(); start(next);
+  const a = state.active, now = Date.now();
+  const cur = a.segments[a.segments.length - 1];
+  cur.end = now;
+  a.segments.push({ side: other(cur.side), start: now });
+  save(); render();
 }
 function cancel() {
   if (!confirm('Cancel this feed without saving it?')) return;
   state.active = null;
   save(); render();
 }
-function remove(id) {
-  const f = state.feeds.find(f => f.id === id);
-  if (!f || !confirm(`Delete the ${SIDE[f.side].toLowerCase()} feed at ${fmtTime(f.start)}?`)) return;
-  state.feeds = state.feeds.filter(f => f.id !== id);
+// She forgot to tap Start right away: move the start of the current feed earlier.
+function editActiveStart() {
+  const a = state.active;
+  const cur = new Date(a.start);
+  const input = prompt('What time did this feed start? (e.g. 3:05 PM)', fmtTime(a.start));
+  if (input == null) return;
+  const t = parseTime(input, cur);
+  if (t == null) return alert('Sorry, I couldn’t read that time. Try something like 3:05 PM.');
+  const limit = a.segments.length > 1 ? a.segments[1].start : Date.now();
+  if (t >= limit) return alert('The start has to be earlier than ' + fmtTime(limit) + '.');
+  a.start = t;
+  a.segments[0].start = t;
   save(); render();
+}
+// Reads "3:05 PM", "3:05pm", "15:05" or "305p" as a time on the same day as ref
+// (or the day before, if that would put it in the future).
+function parseTime(str, ref) {
+  const m = str.trim().toLowerCase().match(/^(\d{1,2}):?(\d{2})?\s*([ap])?\.?m?\.?$/);
+  if (!m) return null;
+  let h = +m[1], min = +(m[2] || 0);
+  if (m[3] === 'p' && h < 12) h += 12;
+  if (m[3] === 'a' && h === 12) h = 0;
+  if (!m[3] && h <= 12 && h < ref.getHours() - 6) h += 12; // "3:05" in the afternoon means PM
+  if (h > 23 || min > 59) return null;
+  const d = new Date(ref); d.setHours(h, min, 0, 0);
+  if (d.getTime() > Date.now()) d.setDate(d.getDate() - 1);
+  return d.getTime();
 }
 
 /* ---------- formatting ---------- */
 const pad = n => String(n).padStart(2, '0');
 function fmtTime(ms) { return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 function fmtDur(ms) {
-  const m = Math.round(ms / 60000);
+  const m = Math.round(ms / MIN);
   if (m < 1) return '<1 min';
   if (m < 60) return m + ' min';
   return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm';
 }
 function fmtClock(ms) {
-  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600);
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600);
   return (h ? h + ':' + pad(Math.floor(s / 60) % 60) : Math.floor(s / 60)) + ':' + pad(s % 60);
 }
 function fmtAgo(ms) {
-  const m = Math.floor((Date.now() - ms) / 60000);
+  const m = Math.floor((Date.now() - ms) / MIN);
   if (m < 1) return 'just now';
   if (m < 60) return m + ' min ago';
   return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm ago';
@@ -182,41 +283,65 @@ function dayLabel(ms) {
   if (k === dayKey(now - 864e5)) return 'Yesterday';
   return new Date(ms).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
 }
+function toLocalInput(ms) { const d = new Date(ms); return dayKey(ms) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function splitText(f) {
+  const t = sideTotals(f), order = sideOrder(f);
+  if (order.length === 1) return SIDE[order[0]] + ' side';
+  return [...new Set(order)].map(s => `${SIDE[s]} ${fmtDur(t[s])}`).join(' · ');
+}
 
 /* ---------- render ---------- */
 const app = document.getElementById('app');
 
 function render() {
   app.innerHTML = (state.active ? activeView() : idleView()) + logView();
-  document.title = state.active ? `${SIDE[state.active.side]} · ${fmtClock(Date.now() - state.active.start)}` : 'Feeds';
+  setTitle();
+}
+function setTitle() {
+  const a = state.active;
+  document.title = a ? `${SIDE[lastSide(a)]} · ${fmtClock(Date.now() - a.start)}` : 'Feeds';
 }
 
 function idleView() {
   const last = state.feeds[0];
-  const next = last ? (last.side === 'L' ? 'R' : 'L') : null;
+  const next = last ? other(lastSide(last)) : null;
   const btn = s => `<button class="side-btn ${s}${s === next ? ' next' : ''}" onclick="start('${s}')">
       ${s === next ? '<span class="tag">Next</span>' : ''}${SIDE[s]}</button>`;
-  return `<section class="card">
-    ${last ? `
-      <p class="eyebrow">Last fed on</p>
-      <p class="last-side ${last.side}">${SIDE[last.side]} side</p>
-      <p class="last-meta">Started ${fmtTime(last.start)} · ${fmtDur(last.end - last.start)} · ${fmtAgo(last.start)}</p>
-    ` : `<p class="eyebrow">Welcome</p><p class="last-side">No feeds yet</p>`}
+  let head = `<p class="eyebrow">Welcome</p><p class="last-side">No feeds yet</p>`;
+  if (last) {
+    const order = sideOrder(last);
+    const title = order.length === 1
+      ? `<span class="${order[0]}-text">${SIDE[order[0]]} side</span>`
+      : order.map(s => `<span class="${s}-text">${SIDE[s]}</span>`).join(' → ');
+    const t = sideTotals(last);
+    head = `<p class="eyebrow">Last feed</p>
+      <p class="last-side">${title}</p>
+      ${order.length > 1 ? `<p class="split">${[...new Set(order)].map(s => `<span class="${s}-text">${SIDE[s]} ${fmtDur(t[s])}</span>`).join(' · ')}</p>` : ''}
+      <p class="last-meta">Started ${fmtTime(last.start)} · ${fmtDur(feedDur(last))} total · ${fmtAgo(last.start)}</p>`;
+  }
+  return `<section class="card">${head}
     <p class="start-label">Start a feed</p>
     <div class="sides">${btn('L')}${btn('R')}</div>
   </section>`;
 }
 
 function activeView() {
-  const a = state.active, other = a.side === 'L' ? 'R' : 'L';
+  const a = state.active, cur = a.segments[a.segments.length - 1];
+  const t = sideTotals(a);
+  const used = [...new Set(sideOrder(a))];
+  const chips = used.length > 1 || a.segments.length > 1
+    ? `<div class="chips">${used.map(s => `<span class="chip ${s}${s === cur.side ? ' now' : ''}" id="chip-${s}">${SIDE[s]} ${fmtClock(t[s])}</span>`).join('')}</div>`
+    : '';
   return `<section class="card active">
     <p class="eyebrow">Feeding on</p>
-    <p class="side ${a.side}">${SIDE[a.side]} side</p>
-    <div class="timer" id="timer">${fmtClock(Date.now() - a.start)}</div>
-    <p class="since">Started ${fmtTime(a.start)}</p>
-    <button class="stop ${a.side}" onclick="stop()">Stop feed</button>
+    <p class="side ${cur.side}-text">${SIDE[cur.side]} side</p>
+    <div class="timer" id="timer">${fmtClock(segDur(cur))}</div>
+    ${chips}
+    <p class="since">Total <span id="total">${fmtClock(Date.now() - a.start)}</span> · started
+      <button class="linkish" onclick="editActiveStart()">${fmtTime(a.start)}</button></p>
+    <button class="stop ${cur.side}" onclick="stop()">Stop feed</button>
     <div class="row-actions">
-      <button onclick="switchSide()">Switch to ${SIDE[other]}</button>
+      <button onclick="switchSide()">Switch to ${SIDE[other(cur.side)]}</button>
       <button class="cancel" onclick="cancel()">Cancel</button>
     </div>
   </section>`;
@@ -225,7 +350,7 @@ function activeView() {
 function logView() {
   const today = dayKey(Date.now());
   const todays = state.feeds.filter(f => dayKey(f.start) === today);
-  const total = todays.reduce((t, f) => t + (f.end - f.start), 0);
+  const total = todays.reduce((t, f) => t + feedDur(f), 0);
 
   const cutoff = Date.now() - showDays * 864e5;
   const shown = state.feeds.filter(f => f.start >= cutoff);
@@ -236,31 +361,113 @@ function logView() {
     groups[groups.length - 1].feeds.push(f);
   }
 
-  const entry = f => `<div class="entry">
-      <span class="pill ${f.side}">${f.side}</span>
-      <span class="when">${fmtTime(f.start)}<small>${SIDE[f.side]} side</small></span>
-      <span class="dur">${fmtDur(f.end - f.start)}</span>
-      <button class="del" aria-label="Delete" onclick="remove(${f.id})">×</button>
-    </div>`;
+  const entry = f => `<button class="entry" onclick="openEdit(${f.id})">
+      <span class="pills">${sideOrder(f).map(s => `<span class="pill ${s}">${s}</span>`).join('')}</span>
+      <span class="when">${fmtTime(f.start)}<small>${splitText(f)}</small></span>
+      <span class="dur">${fmtDur(feedDur(f))}</span>
+      <span class="chev">›</span>
+    </button>`;
 
   return `
     <div class="summary">
       <div><b>${todays.length}</b><span>feeds today</span></div>
       <div><b>${total ? fmtDur(total) : '0 min'}</b><span>total today</span></div>
     </div>
-    ${groups.length ? groups.map(g => `<h2>${g.label}</h2><div class="log">${g.feeds.map(entry).join('')}</div>`).join('')
-      : `<div class="log"><p class="empty">Your feeds will show up here.</p></div>`}
+    ${groups.length ? groups.map((g, i) => `<div class="log-head"><h2>${g.label}</h2>${i === 0 ? '<button class="add" onclick="openAdd()">+ Add a feed</button>' : ''}</div><div class="log">${g.feeds.map(entry).join('')}</div>`).join('')
+      : `<div class="log-head"><h2>Log</h2><button class="add" onclick="openAdd()">+ Add a feed</button></div><div class="log"><p class="empty">Your feeds will show up here.</p></div>`}
     ${state.feeds.length > shown.length ? `<button class="more" onclick="showDays += 7; render()">Show older</button>` : ''}
     <button class="export" onclick="exportCsv()">Export to Excel</button>
     <p class="note">Saves a spreadsheet of every feed. Do this now and then as a backup.</p>`;
 }
 
+/* ---------- add / edit sheet ---------- */
+const sheet = document.getElementById('sheet');
+
+function openAdd() {
+  const last = state.feeds[0];
+  const side = last ? other(lastSide(last)) : 'L';
+  draft = { id: null, start: toLocalInput(Date.now() - 20 * MIN), segs: [{ side, min: 15 }] };
+  renderSheet();
+}
+function openEdit(id) {
+  const f = state.feeds.find(f => f.id === id);
+  if (!f) return;
+  draft = {
+    id, start: toLocalInput(f.start),
+    segs: f.segments.map(s => ({ side: s.side, min: Math.max(1, Math.round(segDur(s) / MIN)) })),
+  };
+  renderSheet();
+}
+function closeSheet() { draft = null; sheet.innerHTML = ''; }
+
+function renderSheet() {
+  if (!draft) return closeSheet();
+  const segs = draft.segs.map((s, i) => `<div class="seg">
+      <button class="which ${s.side}" onclick="draft.segs[${i}].side = other(draft.segs[${i}].side); renderSheet()">${SIDE[s.side]}</button>
+      <input type="number" inputmode="numeric" min="1" max="240" value="${s.min}" aria-label="${SIDE[s.side]} minutes"
+        oninput="draft.segs[${i}].min = this.value; updateTotal()">
+      <span class="unit">min</span>
+      ${draft.segs.length > 1 ? `<button class="x" aria-label="Remove" onclick="draft.segs.splice(${i}, 1); renderSheet()">×</button>` : ''}
+    </div>`).join('');
+  sheet.innerHTML = `<div class="shade" onclick="if (event.target === this) closeSheet()">
+    <div class="sheet" role="dialog" aria-label="${draft.id ? 'Edit feed' : 'Add a feed'}">
+      <h3>${draft.id ? 'Edit feed' : 'Add a feed'}</h3>
+      <p class="field-label">Started</p>
+      <input type="datetime-local" value="${draft.start}" onchange="draft.start = this.value">
+      <div class="segs">
+        <p class="field-label">Sides</p>
+        <p class="hint">In the order you fed. Tap a side to flip it.</p>
+        ${segs}
+        <button class="add-side" onclick="draft.segs.push({ side: other(draft.segs[draft.segs.length - 1].side), min: 10 }); renderSheet()">+ Add ${SIDE[other(draft.segs[draft.segs.length - 1].side)]} side</button>
+      </div>
+      <p class="total" id="draft-total"></p>
+      <div class="sheet-actions">
+        <button class="back" onclick="closeSheet()">Cancel</button>
+        <button class="save" onclick="saveDraft()">Save</button>
+      </div>
+      ${draft.id ? `<button class="delete" onclick="deleteDraft()">Delete this feed</button>` : ''}
+    </div>
+  </div>`;
+  updateTotal();
+}
+function updateTotal() {
+  const el = document.getElementById('draft-total');
+  const m = draft.segs.reduce((t, s) => t + (parseFloat(s.min) || 0), 0);
+  if (el) el.textContent = 'Total ' + fmtDur(m * MIN);
+}
+function saveDraft() {
+  const start = new Date(draft.start).getTime();
+  if (!draft.start || isNaN(start)) return alert('Please pick when the feed started.');
+  if (start > Date.now()) return alert('That start time is in the future.');
+  const mins = draft.segs.map(s => parseFloat(s.min));
+  if (mins.some(m => !(m > 0))) return alert('Each side needs some minutes (at least 1).');
+  if (mins.some(m => m > 240)) return alert('That looks too long. Please check the minutes.');
+
+  let t = start;
+  const segments = draft.segs.map((s, i) => ({ side: s.side, start: t, end: (t += mins[i] * MIN) }));
+  const feed = { id: start, start, end: t, segments };
+  // Keep ids unique if two feeds land on the same minute.
+  while (state.feeds.some(f => f.id === feed.id && f.id !== draft.id)) feed.id++;
+
+  state.feeds = state.feeds.filter(f => f.id !== draft.id);
+  state.feeds.push(feed);
+  sortFeeds();
+  save(); closeSheet(); render();
+}
+function deleteDraft() {
+  if (!confirm('Delete this feed?')) return;
+  state.feeds = state.feeds.filter(f => f.id !== draft.id);
+  save(); closeSheet(); render();
+}
+
 /* ---------- export ---------- */
 async function exportCsv() {
   if (!state.feeds.length) return alert('No feeds to export yet.');
-  const rows = [['Date', 'Start', 'End', 'Minutes', 'Side']];
+  const rows = [['Date', 'Start', 'End', 'Total minutes', 'Left minutes', 'Right minutes', 'Sides']];
   for (const f of [...state.feeds].reverse()) {
-    rows.push([dayKey(f.start), fmtTime(f.start), fmtTime(f.end), ((f.end - f.start) / 60000).toFixed(1), SIDE[f.side]]);
+    const t = sideTotals(f);
+    rows.push([dayKey(f.start), fmtTime(f.start), fmtTime(f.end), (feedDur(f) / MIN).toFixed(1),
+      (t.L / MIN).toFixed(1), (t.R / MIN).toFixed(1), sideOrder(f).map(s => SIDE[s]).join(' > ')]);
   }
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const name = `feeds-${dayKey(Date.now())}.csv`;
@@ -280,16 +487,20 @@ async function exportCsv() {
 
 /* ---------- tick ---------- */
 setInterval(() => {
-  if (state.active) {
-    const t = document.getElementById('timer');
-    if (t) t.textContent = fmtClock(Date.now() - state.active.start);
-    document.title = `${SIDE[state.active.side]} · ${t ? t.textContent : ''}`;
-  }
+  const a = state.active;
+  if (!a) return;
+  const cur = a.segments[a.segments.length - 1];
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('timer', fmtClock(segDur(cur)));
+  set('total', fmtClock(Date.now() - a.start));
+  const t = sideTotals(a);
+  for (const s of ['L', 'R']) set('chip-' + s, `${SIDE[s]} ${fmtClock(t[s])}`);
+  setTitle();
 }, 1000);
-// Refresh "x min ago" text and pick up changes made in another tab.
-setInterval(() => { if (!state.active) render(); }, 30000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = load(); render(); } });
-window.addEventListener('storage', e => { if (e.key === KEY) { state = load(); render(); } });
+// Refresh "x min ago" text. Skipped while the sheet is open so typing isn't interrupted.
+setInterval(() => { if (!state.active && !draft) render(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !draft) { state = load(); render(); } });
+window.addEventListener('storage', e => { if (e.key === KEY && !draft) { state = load(); render(); } });
 
 render();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
