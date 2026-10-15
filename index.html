@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feeds</title>
+<meta name="theme-color" content="#fbf1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1716" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Feeds">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --bg: #fbf1ec;
+    --card: #ffffff;
+    --text: #3a2f2c;
+    --muted: #8a7b76;
+    --line: #eadfd9;
+    --left: #e28478;
+    --left-soft: #fbe3df;
+    --right: #5f9fa1;
+    --right-soft: #dcecec;
+    --danger: #b4483b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1716;
+      --card: #262120;
+      --text: #f1e8e4;
+      --muted: #a5958f;
+      --line: #3a3230;
+      --left: #e8907f;
+      --left-soft: #43302c;
+      --right: #74b4b5;
+      --right-soft: #283b3b;
+      --danger: #e27a6c;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px);
+    max-width: 520px; margin: 0 auto;
+  }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+
+  .card { background: var(--card); border-radius: 22px; padding: 22px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+
+  /* idle */
+  .last-side { font-size: 34px; font-weight: 700; margin: 0; }
+  .last-side.L { color: var(--left); }
+  .last-side.R { color: var(--right); }
+  .last-meta { color: var(--muted); margin: 2px 0 0; }
+  .start-label { margin: 26px 0 10px; font-weight: 600; }
+  .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .side-btn {
+    position: relative; padding: 30px 0; border-radius: 18px; font-size: 22px; font-weight: 700;
+  }
+  .side-btn.L { background: var(--left-soft); color: var(--left); }
+  .side-btn.R { background: var(--right-soft); color: var(--right); }
+  .side-btn.next.L { background: var(--left); color: #fff; }
+  .side-btn.next.R { background: var(--right); color: #fff; }
+  .side-btn .tag {
+    position: absolute; top: 8px; left: 0; right: 0; font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; opacity: .85;
+  }
+
+  /* active */
+  .active { text-align: center; }
+  .active .side { font-size: 22px; font-weight: 700; margin: 0; }
+  .active .side.L { color: var(--left); }
+  .active .side.R { color: var(--right); }
+  .timer { font-size: 64px; font-weight: 300; font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+  .since { color: var(--muted); margin: 0 0 22px; }
+  .stop { width: 100%; padding: 22px 0; border-radius: 18px; font-size: 22px; font-weight: 700; color: #fff; }
+  .stop.L { background: var(--left); }
+  .stop.R { background: var(--right); }
+  .row-actions { display: flex; gap: 12px; margin-top: 12px; }
+  .row-actions button { flex: 1; padding: 14px 0; border-radius: 14px; background: var(--bg); font-weight: 600; }
+  .row-actions .cancel { color: var(--muted); }
+
+  /* log */
+  .summary { display: flex; gap: 12px; margin: 18px 0 6px; }
+  .summary div { flex: 1; background: var(--card); border-radius: 16px; padding: 12px 14px; }
+  .summary b { display: block; font-size: 22px; }
+  .summary span { font-size: 13px; color: var(--muted); }
+  h2 { font-size: 15px; color: var(--muted); font-weight: 600; margin: 22px 4px 8px; }
+  .log { background: var(--card); border-radius: 18px; overflow: hidden; }
+  .entry { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-top: 1px solid var(--line); }
+  .entry:first-child { border-top: 0; }
+  .pill { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; flex: none; }
+  .pill.L { background: var(--left); }
+  .pill.R { background: var(--right); }
+  .entry .when { flex: 1; }
+  .entry .when small { display: block; color: var(--muted); font-size: 13px; }
+  .entry .dur { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .entry .del { background: none; color: var(--muted); font-size: 22px; padding: 0 4px 0 8px; line-height: 1; }
+  .empty { color: var(--muted); text-align: center; padding: 26px 0; }
+
+  .export { display: block; width: 100%; margin-top: 26px; padding: 16px 0; border-radius: 16px; background: var(--card); font-weight: 600; }
+  .note { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+  .more { display: block; margin: 10px auto 0; background: none; color: var(--muted); font-size: 15px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+const KEY = 'feeds.v1';
+const SIDE = { L: 'Left', R: 'Right' };
+let state = load();
+let showDays = 7;
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.feeds)) return s;
+  } catch (e) {}
+  return { active: null, feeds: [] };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { alert('Could not save: ' + e.message); }
+}
+// Ask the browser not to clear this data when space is low.
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+/* ---------- actions ---------- */
+function start(side) {
+  state.active = { side, start: Date.now() };
+  save(); render();
+}
+function stop() {
+  const a = state.active;
+  if (!a) return;
+  state.feeds.unshift({ id: a.start, side: a.side, start: a.start, end: Date.now() });
+  state.active = null;
+  save(); render();
+}
+function switchSide() {
+  const next = state.active.side === 'L' ? 'R' : 'L';
+  stop(); start(next);
+}
+function cancel() {
+  if (!confirm('Cancel this feed without saving it?')) return;
+  state.active = null;
+  save(); render();
+}
+function remove(id) {
+  const f = state.feeds.find(f => f.id === id);
+  if (!f || !confirm(`Delete the ${SIDE[f.side].toLowerCase()} feed at ${fmtTime(f.start)}?`)) return;
+  state.feeds = state.feeds.filter(f => f.id !== id);
+  save(); render();
+}
+
+/* ---------- formatting ---------- */
+const pad = n => String(n).padStart(2, '0');
+function fmtTime(ms) { return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+function fmtDur(ms) {
+  const m = Math.round(ms / 60000);
+  if (m < 1) return '<1 min';
+  if (m < 60) return m + ' min';
+  return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm';
+}
+function fmtClock(ms) {
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600);
+  return (h ? h + ':' + pad(Math.floor(s / 60) % 60) : Math.floor(s / 60)) + ':' + pad(s % 60);
+}
+function fmtAgo(ms) {
+  const m = Math.floor((Date.now() - ms) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + ' min ago';
+  return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm ago';
+}
+function dayKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function dayLabel(ms) {
+  const k = dayKey(ms), now = Date.now();
+  if (k === dayKey(now)) return 'Today';
+  if (k === dayKey(now - 864e5)) return 'Yesterday';
+  return new Date(ms).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+/* ---------- render ---------- */
+const app = document.getElementById('app');
+
+function render() {
+  app.innerHTML = (state.active ? activeView() : idleView()) + logView();
+  document.title = state.active ? `${SIDE[state.active.side]} · ${fmtClock(Date.now() - state.active.start)}` : 'Feeds';
+}
+
+function idleView() {
+  const last = state.feeds[0];
+  const next = last ? (last.side === 'L' ? 'R' : 'L') : null;
+  const btn = s => `<button class="side-btn ${s}${s === next ? ' next' : ''}" onclick="start('${s}')">
+      ${s === next ? '<span class="tag">Next</span>' : ''}${SIDE[s]}</button>`;
+  return `<section class="card">
+    ${last ? `
+      <p class="eyebrow">Last fed on</p>
+      <p class="last-side ${last.side}">${SIDE[last.side]} side</p>
+      <p class="last-meta">Started ${fmtTime(last.start)} · ${fmtDur(last.end - last.start)} · ${fmtAgo(last.start)}</p>
+    ` : `<p class="eyebrow">Welcome</p><p class="last-side">No feeds yet</p>`}
+    <p class="start-label">Start a feed</p>
+    <div class="sides">${btn('L')}${btn('R')}</div>
+  </section>`;
+}
+
+function activeView() {
+  const a = state.active, other = a.side === 'L' ? 'R' : 'L';
+  return `<section class="card active">
+    <p class="eyebrow">Feeding on</p>
+    <p class="side ${a.side}">${SIDE[a.side]} side</p>
+    <div class="timer" id="timer">${fmtClock(Date.now() - a.start)}</div>
+    <p class="since">Started ${fmtTime(a.start)}</p>
+    <button class="stop ${a.side}" onclick="stop()">Stop feed</button>
+    <div class="row-actions">
+      <button onclick="switchSide()">Switch to ${SIDE[other]}</button>
+      <button class="cancel" onclick="cancel()">Cancel</button>
+    </div>
+  </section>`;
+}
+
+function logView() {
+  const today = dayKey(Date.now());
+  const todays = state.feeds.filter(f => dayKey(f.start) === today);
+  const total = todays.reduce((t, f) => t + (f.end - f.start), 0);
+
+  const cutoff = Date.now() - showDays * 864e5;
+  const shown = state.feeds.filter(f => f.start >= cutoff);
+  const groups = [];
+  for (const f of shown) {
+    const k = dayKey(f.start);
+    if (!groups.length || groups[groups.length - 1].k !== k) groups.push({ k, label: dayLabel(f.start), feeds: [] });
+    groups[groups.length - 1].feeds.push(f);
+  }
+
+  const entry = f => `<div class="entry">
+      <span class="pill ${f.side}">${f.side}</span>
+      <span class="when">${fmtTime(f.start)}<small>${SIDE[f.side]} side</small></span>
+      <span class="dur">${fmtDur(f.end - f.start)}</span>
+      <button class="del" aria-label="Delete" onclick="remove(${f.id})">×</button>
+    </div>`;
+
+  return `
+    <div class="summary">
+      <div><b>${todays.length}</b><span>feeds today</span></div>
+      <div><b>${total ? fmtDur(total) : '0 min'}</b><span>total today</span></div>
+    </div>
+    ${groups.length ? groups.map(g => `<h2>${g.label}</h2><div class="log">${g.feeds.map(entry).join('')}</div>`).join('')
+      : `<div class="log"><p class="empty">Your feeds will show up here.</p></div>`}
+    ${state.feeds.length > shown.length ? `<button class="more" onclick="showDays += 7; render()">Show older</button>` : ''}
+    <button class="export" onclick="exportCsv()">Export to Excel</button>
+    <p class="note">Saves a spreadsheet of every feed. Do this now and then as a backup.</p>`;
+}
+
+/* ---------- export ---------- */
+async function exportCsv() {
+  if (!state.feeds.length) return alert('No feeds to export yet.');
+  const rows = [['Date', 'Start', 'End', 'Minutes', 'Side']];
+  for (const f of [...state.feeds].reverse()) {
+    rows.push([dayKey(f.start), fmtTime(f.start), fmtTime(f.end), ((f.end - f.start) / 60000).toFixed(1), SIDE[f.side]]);
+  }
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const name = `feeds-${dayKey(Date.now())}.csv`;
+  const file = new File([csv], name, { type: 'text/csv' });
+
+  // On a phone this opens the share sheet (Save to Files, Mail, Messages...).
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Feeds' }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- tick ---------- */
+setInterval(() => {
+  if (state.active) {
+    const t = document.getElementById('timer');
+    if (t) t.textContent = fmtClock(Date.now() - state.active.start);
+    document.title = `${SIDE[state.active.side]} · ${t ? t.textContent : ''}`;
+  }
+}, 1000);
+// Refresh "x min ago" text and pick up changes made in another tab.
+setInterval(() => { if (!state.active) render(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = load(); render(); } });
+window.addEventListener('storage', e => { if (e.key === KEY) { state = load(); render(); } });
+
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
