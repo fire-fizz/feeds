@@ -1,6 +1,6 @@
 // Lets the app open with no signal. Tries the network first so updates show
 // up right away, and falls back to the saved copy when offline.
-const CACHE = 'feeds-v2';
+const CACHE = 'feeds-v3';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {

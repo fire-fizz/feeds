@@ -55,6 +55,12 @@
   .card { background: var(--card); border-radius: 22px; padding: 22px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
   .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
 
+  .since-flag {
+    display: table; margin: 0 auto 12px; padding: 6px 14px; border-radius: 99px;
+    background: var(--card); color: var(--muted); font-size: 15px;
+  }
+  .since-flag b { color: var(--text); font-variant-numeric: tabular-nums; }
+
   /* idle */
   .last-side { font-size: 34px; font-weight: 700; margin: 0; }
   .last-meta { color: var(--muted); margin: 2px 0 0; }
@@ -270,12 +276,6 @@ function fmtClock(ms) {
   const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600);
   return (h ? h + ':' + pad(Math.floor(s / 60) % 60) : Math.floor(s / 60)) + ':' + pad(s % 60);
 }
-function fmtAgo(ms) {
-  const m = Math.floor((Date.now() - ms) / MIN);
-  if (m < 1) return 'just now';
-  if (m < 60) return m + ' min ago';
-  return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm ago';
-}
 function dayKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function dayLabel(ms) {
   const k = dayKey(ms), now = Date.now();
@@ -294,8 +294,17 @@ function splitText(f) {
 const app = document.getElementById('app');
 
 function render() {
-  app.innerHTML = (state.active ? activeView() : idleView()) + logView();
+  app.innerHTML = sinceFlag() + (state.active ? activeView() : idleView()) + logView();
   setTitle();
+}
+// Time since the last feed started (the usual way feeds are spaced). Hidden while feeding.
+function sinceText() {
+  const m = Math.floor((Date.now() - state.feeds[0].start) / MIN);
+  return m < 60 ? m + ' min' : Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm';
+}
+function sinceFlag() {
+  if (state.active || !state.feeds.length) return '';
+  return `<p class="since-flag"><b id="since">${sinceText()}</b> since last feeding</p>`;
 }
 function setTitle() {
   const a = state.active;
@@ -317,7 +326,7 @@ function idleView() {
     head = `<p class="eyebrow">Last feed</p>
       <p class="last-side">${title}</p>
       ${order.length > 1 ? `<p class="split">${[...new Set(order)].map(s => `<span class="${s}-text">${SIDE[s]} ${fmtDur(t[s])}</span>`).join(' · ')}</p>` : ''}
-      <p class="last-meta">Started ${fmtTime(last.start)} · ${fmtDur(feedDur(last))} total · ${fmtAgo(last.start)}</p>`;
+      <p class="last-meta">Started ${fmtTime(last.start)} · ${fmtDur(feedDur(last))} total</p>`;
   }
   return `<section class="card">${head}
     <p class="start-label">Start a feed</p>
@@ -488,7 +497,11 @@ async function exportCsv() {
 /* ---------- tick ---------- */
 setInterval(() => {
   const a = state.active;
-  if (!a) return;
+  if (!a) {
+    const el = document.getElementById('since');
+    if (el) el.textContent = sinceText();
+    return;
+  }
   const cur = a.segments[a.segments.length - 1];
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('timer', fmtClock(segDur(cur)));
